@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "question": "Quel est le résultat de 7 × 8 ?",
+        "choices": [
+            "54",
+            "56",
+            "58"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 2,
+        "question": "La dérivée de f(x)=x² est :",
+        "choices": [
+            "2x",
+            "x",
+            "x²"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 3,
+        "question": "Quel est le nombre π arrondi au dixième ?",
+        "choices": [
+            "3,1",
+            "3,2",
+            "3,3"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 4,
+        "question": "Résoudre : 2x+3=11",
+        "choices": [
+            "x=4",
+            "x=7",
+            "x=−4"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 5,
+        "question": "Quel est le plus grand nombre premier < 20 ?",
+        "choices": [
+            "17",
+            "19",
+            "18"
+        ],
+        "answer_index": 1
+    }
+]

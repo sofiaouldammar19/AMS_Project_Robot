@@ -1,0 +1,52 @@
+[
+    {
+        "id": 1,
+        "question": "Qu’est‑ce qu’un algorithme ?",
+        "choices": [
+            "Une suite finie d’instructions",
+            "Un langage de programmation",
+            "Un composant matériel"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 2,
+        "question": "Parmi ces langages, lequel est typé dynamiquement ?",
+        "choices": [
+            "Java",
+            "C++",
+            "Python"
+        ],
+        "answer_index": 2
+    },
+    {
+        "id": 3,
+        "question": "Que signifie « HTTP » ?",
+        "choices": [
+            "HyperText Transmission Protocol",
+            "HyperText Transfer Protocol",
+            "Hyperlink Transfer Protocol"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 4,
+        "question": "Dans Git, comment crée‑t‑on une nouvelle branche ?",
+        "choices": [
+            "git branch nom",
+            "git new branch nom",
+            "git create nom"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 5,
+        "question": "Quel paradigme n’est PAS orienté objet ?",
+        "choices": [
+            "Functional",
+            "Class‑based",
+            "Prototype‑based"
+        ],
+        "answer_index": 0
+    }
+]
