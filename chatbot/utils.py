@@ -18,40 +18,38 @@ def get_relative_time_phrase(forecast_datetime):
         return f"dans {minutes} minute{'s' if minutes > 1 else ''}"
 
 
-def generate_gemini_response(
-    city,
-    temperature,
-    description,
-    humidity=None,
-    wind_speed=None,
-    forecast_datetime=None,
-    conversation_context="",
-):
-    if forecast_datetime:
-        time_phrase = get_relative_time_phrase(forecast_datetime)
-        print(f"🧪 Phrase relative : {time_phrase}")
-        prompt = (
-            f"{conversation_context}\n"
-            f"Un utilisateur demande la météo à {city} {time_phrase}.\n"
-            "Voici les données :\n"
-            f"- Température : {temperature} °C\n"
-            f"- Humidité : {humidity}%\n"
-            f"- Vitesse du vent : {wind_speed} km/h\n"
-            f"- Conditions : {description}.\n\n"
-            "Ne mets aucun émoji dans ta réponse.\n"
-            "Réponds de manière naturelle et engageante."
-        )
-    else:
-        prompt = (
-            f"{conversation_context}\n"
-            f"Un utilisateur demande la météo à {city}.\n"
-            "Voici les données :\n"
-            f"- Température : {temperature} °C\n"
-            f"- Humidité : {humidity}%\n"
-            f"- Vitesse du vent : {wind_speed} km/h\n"
-            f"- Conditions : {description}.\n\n"
-            "Ne mets aucun émoji dans ta réponse.\n"
-            "Réponds de manière naturelle et engageante."
-        )
-    response = gemini_model.generate_content(prompt)
-    return response.text if response else "Désolé, je n'ai pas pu générer de réponse."
+def generate_gemini_response(service_name, data_dict, conversation_context=""):
+    print(f"[utils] generate_gemini_response pour service {service_name}")
+    print(f"[utils] data_dict : {data_dict}")
+
+    # 1) Cadre et style
+    prompt = (
+        f"{conversation_context}\n"
+        f"Tu es un assistant virtuel pour le service « {service_name} ».\n"
+        "Fournis les informations de façon naturelle et engageante.\n\n"
+        "N'utilise pas d'émojis. Je t'interdis d'en utiliser\n"
+        "Données disponibles :\n"
+    )
+    # 2) Injection dynamique
+    for key, val in data_dict.items():
+        prompt += f"- {key} : {val}\n"
+    # 3) Contraintes stylistiques
+    prompt += (
+        "\nN’utilise pas d’émojis.\n"
+        "Si une donnée manque, invite l’utilisateur à la préciser.\n"
+        "Sois clair, chaleureux et concis."
+    )
+
+    # 4) Appel à Gemini
+    try:
+        resp = gemini_model.generate_content(prompt)
+        text = resp.text if resp else None
+        print(f"[utils] réponse Gemini brute : {text}")
+    except Exception as e:
+        print(f"[utils] erreur appel Gemini : {e}")
+        text = None
+
+    if not text:
+        text = "Désolé, je n'ai pas pu générer de réponse."
+    print(f"[utils] réponse finale : {text}")
+    return text

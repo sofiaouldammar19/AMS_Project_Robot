@@ -4,7 +4,7 @@ import os
 import requests
 from datetime import datetime
 
-DOSSIER_FIXE = r"EDT"
+DOSSIER_FIXE = r"data/EDT"
 FICHIER_DB = os.path.join(DOSSIER_FIXE, "EDT.db")
 
 FORMATIONS = {
@@ -28,7 +28,8 @@ def download_ics(url, filepath):
 #  Fonction pour parser un fichier .ics et extraire les événements
 def parse_ics(ics_content):
     events = []
-    event_pattern = re.compile(r"""
+    event_pattern = re.compile(
+        r"""
         BEGIN:VEVENT.*?
         DTSTART:(.*?)\n.*?
         DTEND:(.*?)\n.*?
@@ -36,7 +37,9 @@ def parse_ics(ics_content):
         LOCATION;LANGUAGE=fr:(.*?)\n.*?
         DESCRIPTION;LANGUAGE=fr:(.*?)\n.*?
         END:VEVENT
-    """, re.DOTALL | re.VERBOSE)
+    """,
+        re.DOTALL | re.VERBOSE,
+    )
 
     for match in event_pattern.finditer(ics_content):
         dtstart = datetime.strptime(match.group(1), "%Y%m%dT%H%M%SZ")
@@ -49,20 +52,24 @@ def parse_ics(ics_content):
 
         # Extraction des champs
         matiere_match = re.search(
-            r"Mati[eè]re ?: (.+?)(?:Enseignant|Type|TD|$)", description)
-        enseignant_match = re.search(
-            r"Enseignant[s]? ?: (.*?)(?:/|$)", description)
+            r"Mati[eè]re ?: (.+?)(?:Enseignant|Type|TD|$)", description
+        )
+        enseignant_match = re.search(r"Enseignant[s]? ?: (.*?)(?:/|$)", description)
         type_match = re.search(r"Type ?: (.*?)(?:<|$)", description)
         td_match = re.search(r"TD ?: (.+?)$", description)
 
         matiere = matiere_match.group(1).strip() if matiere_match else ""
-        enseignant = enseignant_match.group(1).strip().replace(
-            "\\,", ",") if enseignant_match else ""
+        enseignant = (
+            enseignant_match.group(1).strip().replace("\\,", ",")
+            if enseignant_match
+            else ""
+        )
         type_cours = type_match.group(1).strip() if type_match else ""
         groupes = td_match.group(1).strip() if td_match else ""
 
-        events.append((dtstart, dtend, matiere, enseignant,
-                      location, type_cours, groupes))
+        events.append(
+            (dtstart, dtend, matiere, enseignant, location, type_cours, groupes)
+        )
 
     return events
 
@@ -74,7 +81,8 @@ def save_to_sqlite(events, db_path, formation):
     cur = conn.cursor()
 
     #  Créer une table spécifique à la formation si elle n'existe pas
-    cur.execute(f'''
+    cur.execute(
+        f"""
         CREATE TABLE IF NOT EXISTS {table_name} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             start_time TEXT,
@@ -85,13 +93,20 @@ def save_to_sqlite(events, db_path, formation):
             type TEXT,
             groupes TEXT
         )
-    ''')
+    """
+    )
 
     #  Insérer les événements dans la bonne table
-    cur.executemany(f'''
+    cur.executemany(
+        f"""
         INSERT INTO {table_name} (start_time, end_time, matiere, enseignant, salle, type, groupes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', [(e[0].isoformat(), e[1].isoformat(), e[2], e[3], e[4], e[5], e[6]) for e in events])
+    """,
+        [
+            (e[0].isoformat(), e[1].isoformat(), e[2], e[3], e[4], e[5], e[6])
+            for e in events
+        ],
+    )
 
     conn.commit()
     conn.close()
@@ -140,7 +155,8 @@ def importer_edt(formation):
     save_to_sqlite(events, FICHIER_DB, formation)
 
     print(
-        f"✅ Données de {formation} importées avec succès dans SQLite ({FICHIER_DB}) !")
+        f"✅ Données de {formation} importées avec succès dans SQLite ({FICHIER_DB}) !"
+    )
 
 
 #  Importer tous les emplois du temps définis

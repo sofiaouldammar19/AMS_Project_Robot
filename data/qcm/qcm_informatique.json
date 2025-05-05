@@ -48,5 +48,105 @@
             "Prototype‑based"
         ],
         "answer_index": 0
+    },
+    {
+        "id": 6,
+        "question": "Qu’est‑ce qu’une table de hachage ?",
+        "choices": [
+            "Une structure de données clé‑valeur permettant un accès en moyenne O(1)",
+            "Un algorithme de tri hybrides",
+            "Un type de fichier binaire"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 7,
+        "question": "Quelle est la complexité en moyenne de la recherche dichotomique dans un tableau trié de taille n ?",
+        "choices": [
+            "O(n)",
+            "O(log n)",
+            "O(n log n)"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 8,
+        "question": "Quel composant matériel est responsable de la gestion de la mémoire virtuelle ?",
+        "choices": [
+            "Le GPU",
+            "L’unité de gestion de mémoire (MMU)",
+            "Le contrôleur USB"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 9,
+        "question": "Dans SQL, quelle commande supprime entièrement une table et ses données ?",
+        "choices": [
+            "DELETE TABLE nom_table",
+            "DROP TABLE nom_table",
+            "REMOVE TABLE nom_table"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 10,
+        "question": "En Java, quel mot‑clé utilise‑t‑on pour qu’une classe hérite d’une autre ?",
+        "choices": [
+            "implements",
+            "extends",
+            "inherits"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 11,
+        "question": "Quel protocole de la couche Transport garantit la fiabilité de la transmission ?",
+        "choices": [
+            "UDP",
+            "TCP",
+            "ICMP"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 12,
+        "question": "Dans une file d’attente (queue), quel principe d’accès s’applique ?",
+        "choices": [
+            "LIFO (Last In First Out)",
+            "FIFO (First In First Out)",
+            "Random Access"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 13,
+        "question": "En Java, une exception non cochée (unchecked exception) est une sous‑classe de :",
+        "choices": [
+            "java.lang.Exception",
+            "java.lang.RuntimeException",
+            "java.lang.Error"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 14,
+        "question": "En CSS, quel sélecteur cible un élément ayant un attribut id=\"monId\" ?",
+        "choices": [
+            ".monId",
+            "#monId",
+            "*monId"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 15,
+        "question": "En systèmes d’exploitation, que désigne le phénomène de « thrashing » ?",
+        "choices": [
+            "Une fragmentation excessive du système de fichiers",
+            "Un va‑et‑vient constant entre la mémoire centrale et le disque",
+            "Une panne du disque dur"
+        ],
+        "answer_index": 1
     }
 ]

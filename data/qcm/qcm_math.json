@@ -48,5 +48,105 @@
             "18"
         ],
         "answer_index": 1
+    },
+    {
+        "id": 6,
+        "question": "Quel est le PGCD de 48 et 18 ?",
+        "choices": [
+            "6",
+            "12",
+            "3"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 7,
+        "question": "Combien y a‑t‑il de solutions réelles à l’équation x²+1=0 ?",
+        "choices": [
+            "0",
+            "1",
+            "2"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 8,
+        "question": "La somme des angles intérieurs d’un pentagone convexe est :",
+        "choices": [
+            "540°",
+            "360°",
+            "720°"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 9,
+        "question": "Si f(x)=3x+5, quelle est l’image de 4 par f ?",
+        "choices": [
+            "12",
+            "17",
+            "7"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 10,
+        "question": "Quel est le terme général d’une suite arithmétique de premier terme 2 et raison 3 ?",
+        "choices": [
+            "uₙ = 2·3ⁿ",
+            "uₙ = 2 + 3n",
+            "uₙ = 2 + 3(n−1)"
+        ],
+        "answer_index": 2
+    },
+    {
+        "id": 11,
+        "question": "Quelle est la valeur de log₁₀(1000) ?",
+        "choices": [
+            "2",
+            "3",
+            "4"
+        ],
+        "answer_index": 1
+    },
+    {
+        "id": 12,
+        "question": "Résoudre dans ℝ : 3(x−2)=9",
+        "choices": [
+            "x = 5",
+            "x = 3",
+            "x = −1"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 13,
+        "question": "Quelle est l’aire d’un cercle de rayon 5 ?",
+        "choices": [
+            "25π",
+            "10π",
+            "5π"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 14,
+        "question": "Quelle est la médiane de la série suivante : [3, 7, 9, 15, 21] ?",
+        "choices": [
+            "9",
+            "10",
+            "15"
+        ],
+        "answer_index": 0
+    },
+    {
+        "id": 15,
+        "question": "Combien vaut la dérivée de f(x)=sin(x) en x=π/2 ?",
+        "choices": [
+            "0",
+            "1",
+            "−1"
+        ],
+        "answer_index": 1
     }
 ]
