@@ -1,0 +1,11 @@
+flask
+fastapi
+json
+uvicorn
+requests
+spacy
+python-dotenv
+dateparser
+speechrecognition
+google-generativeai
+
