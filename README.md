@@ -82,19 +82,19 @@ python -m spacy download fr_core_news_sm
 
 ---
 
-## 💬 Exemples d’interaction
+## Exemples d’interaction
 
-### 📍 Météo
+### Météo
 
 **Utilisateur** : « Quelle sera la météo à Paris demain à 14h ? »
 **Pepper** : « Demain à 14h à Paris, il fera 16°C avec un temps ensoleillé. »
 
-### 📍 Emploi du temps
+### Emploi du temps
 
 **Utilisateur** : « Quel est le cours de M1 IA le 22 avril à 9h ? »
 **Pepper** : « C’est cours de Machine Learning en salle A201. »
 
-### 📍 Quiz
+### Quiz
 
 **Utilisateur** : « Pose-moi une question en informatique. »
 **Pepper** : « Quelle est la complexité moyenne d'une recherche dichotomique ?
@@ -102,14 +102,14 @@ Option 1 : O(n), Option 2 : O(log n), Option 3 : O(n log n) »
 
 ---
 
-## 🧠 Fonctionnalités clés
+## Fonctionnalités clés
 
-- ✅ Requêtes météo avec date, heure, ville
-- ✅ Emploi du temps universitaire en temps réel
-- ✅ Quiz aléatoires par domaine (informatique, math)
-- ✅ Gestion des erreurs (ville absente, formation inconnue…)
-- ✅ Session QCM maintenue entre les requêtes via cookie HTTP
-- ✅ Requêtes vocales naturelles → robot répond oralement
+- Requêtes météo avec date, heure, ville
+- Emploi du temps universitaire en temps réel
+- Quiz aléatoires par domaine (informatique, math)
+- Gestion des erreurs (ville absente, formation inconnue…)
+- Session QCM maintenue entre les requêtes via cookie HTTP
+- Requêtes vocales naturelles → robot répond oralement
 
 ---
 
