@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="84.0896"><Box name="APICall" id="3" localization="8" tooltip="Cette boite fait le call vers Rasa, en ayant reçu en input les paramètres." x="292" y="138"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[# -*- coding: utf-8 -*-
+import urllib2, json, time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self)
+        # 1) On déclare self.text en unicode
+        self.base_url = 'http://10.26.9.42:5000/chatbot'
+        self.text     = u"Bonjour, je suis à votre disposition."
+        self.newCall  = True
+        self.session_cookie = None
+        msg = u"[APICall] __init__ : base_url={}".format(self.base_url)
+        self.logger.info(msg.encode('utf-8'))
+
+    def onLoad(self):
+        self.logger.info("[APICall] onLoad")
+
+    def onUnload(self):
+        self.logger.info("[APICall] onUnload")
+
+    def onInput_onStart(self):
+        # Logging unicode → bytes
+        msg = u"[APICall] onStart (newCall={})".format(self.newCall)
+        self.logger.info(msg.encode('utf-8'))
+
+        if self.newCall:
+            self.logger.info(u"[APICall] sending greeting".encode('utf-8'))
+            # 2) On encode en utf-8 **uniquement** sur l'objet unicode
+            self.onRasaResponse(self.text.encode('utf-8'))
+            self.newCall = False
+        else:
+            self.logger.info(u"[APICall] skipping greeting".encode('utf-8'))
+
+        self.logger.info(u"[APICall] onStart ending, sending via onStopped()".encode('utf-8'))
+        # onStopped(self.text.encode('utf-8')) si vous voulez renvoyer la donnée sur le port stopped
+        self.onStopped(self.text.encode('utf-8'))
+
+    def onInput_RasaRequest(self, text=None):
+        # --- 1) Préparer utterance en unicode ---
+        if isinstance(text, str):
+            utterance = text.decode('utf-8')
+        else:
+            utterance = text or u""
+        self.logger.info(
+            u"[APICall] onRasaRequest received text={}".format(utterance)
+            .encode('utf-8')
+        )
+
+        # --- 2) Appel HTTP vers votre Flask ---
+        payload = json.dumps({"message": utterance})
+        req = urllib2.Request(self.base_url,
+                              data=payload,
+                              headers={'Content-Type': 'application/json'})
+
+        # si vous stockez un cookie de session manuellement :
+        if self.session_cookie:
+            req.add_header('Cookie', self.session_cookie)
+
+        try:
+            self.logger.info(
+                u"[APICall] calling server {}".format(self.base_url)
+                .encode('utf-8')
+            )
+            resp = urllib2.urlopen(req, timeout=5)
+
+            # 3a) Récupérer le Set-Cookie si présent
+            set_cookie = resp.info().getheader('Set-Cookie')
+            if set_cookie:
+                self.session_cookie = set_cookie.split(';',1)[0]
+                self.logger.info(
+                    u"[APICall] stored session cookie: {}".format(self.session_cookie)
+                    .encode('utf-8')
+                )
+
+            # 3b) Lire LE CORPS une seule fois
+            body = resp.read()
+
+            # 3c) Parser le JSON
+            result = json.loads(body)
+            self.logger.info(
+                u"[APICall] server returned {}".format(result)
+                .encode('utf-8')
+            )
+
+        except Exception as e:
+            self.logger.error(
+                u"[APICall] network or parse error: {}".format(e)
+                .encode('utf-8')
+            )
+            return self.onRasaResponse(
+                u"Désolé, le serveur est injoignable ou a renvoyé un JSON invalide."
+                .encode('utf-8')
+            )
+
+        # --- 4) Extraction de la réponse et passage en unicode ---
+        reply = result.get("response", u"Oups, pas de réponse.")
+        if not isinstance(reply, unicode):
+            reply = reply.decode('utf-8')
+
+        # --- 5) Fin de conversation ? ---
+        if reply.lower().startswith(u"au revoir"):
+            self.logger.info(u"[APICall] sending bye and ending".encode('utf-8'))
+            return self.onBye(reply.encode('utf-8'))
+
+        # --- 6) QCM ? ---
+        choices = result.get("choices")
+        if isinstance(choices, list) and choices:
+            # question
+            self.onRasaResponse(reply.encode('utf-8'))
+            # options
+            for i, opt in enumerate(choices, 1):
+                if not isinstance(opt, unicode):
+                    opt = opt.decode('utf-8')
+                self.onRasaResponse(
+                    u"Option {0} : {1}".format(i, opt).encode('utf-8')
+                )
+            return self.onStopped()
+
+        # --- 7) Cas standard ---
+        self.onRasaResponse(reply.encode('utf-8'))
+        return self.onStopped()
+
+
+    def onInput_onStop(self):
+        self.logger.info(u"[APICall] onStop".encode('utf-8'))
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Input name="RasaRequest" type="3" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="5" /><Output name="onRasaResponse" type="3" type_size="1" nature="2" inner="0" tooltip="" id="6" /><Output name="onBye" type="3" type_size="1" nature="2" inner="0" tooltip="" id="7" /></Box><Box name="Say Text" id="6" localization="8" tooltip="Say the text received on its input." x="605" y="15"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[# -*- coding: utf-8 -*-
+import time
+from naoqi import ALProxy
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts     = ALProxy('ALTextToSpeech')
+        self.ttsStop = ALProxy('ALTextToSpeech', True)
+        self.logger.info("[SayText] initialized TTS proxies")
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids        = []
+        self.logger.info("[SayText] onLoad")
+
+    def onUnload(self):
+        self.logger.info("[SayText] onUnload")
+        for id_ in self.ids:
+            try:
+                self.ttsStop.stop(id_)
+            except:
+                pass
+        while self.bIsRunning:
+            time.sleep(0.1)
+
+    def onInput_onStart(self, p):
+        self.logger.info("[SayText] onStart, text=%s" % repr(p))
+        self.bIsRunning = True
+        try:
+            sentence  = "\\RSPD=" + str(self.getParameter("Speed (%)")) + "\\ "
+            sentence += "\\VCT=" + str(self.getParameter("Voice shaping (%)")) + "\\ "
+            sentence += p + "\\RST\\ "
+            id_ = self.tts.post.say(sentence)
+            self.ids.append(id_)
+            self.logger.info("[SayText] posted say id=%d" % id_)
+            self.tts.wait(id_, 0)
+            self.logger.info("[SayText] finished waiting id=%d" % id_)
+        finally:
+            try:
+                self.ids.remove(id_)
+            except:
+                pass
+            if not self.ids:
+                self.logger.info("[SayText] no more IDs, calling onStopped()")
+                self.onStopped()
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.logger.info("[SayText] onStop")
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="90" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /></Box><Box name="Record Sound" id="8" localization="8" tooltip='Record a sound on the robot. You can choose to record only with one&#x0A;microphone (the front head microphone) in ogg format, or with four microphones&#x0A;(front, sides and rear head microphones) in wav format.&#x0A;&#x0A;If &quot;Temporary storage&quot; isn&apos;t checked, the output sound file is located in &quot;~/recordings/microphones/&lt;File name&gt;&quot;.&#x0A;Else, it is located in a temporary directory&#x0A;&#x0A;The onStopped output is stimulated at the end of the recording and contains the absolute path to the output sound file&#x0A;&#x0A;V1.1.0&#x0A;' x="705" y="151"><bitmap>media/images/box/interaction/rec_sound.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Launches the recording of the sound." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Stops the recording of the sound." id="3" /><Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Returns the absolute path of the output sound file at the end of the recording" id="4" /><Parameter name="File name" inherits_from_parent="0" content_type="3" value="recording" default_value="recording" custom_choice="0" tooltip="Name of the destination file without its extension." id="5" /><Parameter name="Microphones used" inherits_from_parent="0" content_type="3" value="Front, sides and rear head microphones (.wav)" default_value="Front, sides and rear head microphones (.wav)" custom_choice="0" tooltip="Microphones used to record the sound.&#x0A;&#x0A;Note: If you use only the front head microphone the file will be saved in ogg format. If you use the&#x0A;front, sides and rear head microphones it will be saved in wav format." id="6"><Choice value="Front head microphone only (.ogg)" /><Choice value="Front, sides and rear head microphones (.wav)" /></Parameter><Parameter name="Temporary storage" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="Choose if the file should be stored as a temporary file so it is removed as soon&#x0A;as the behavior is unloaded.&#x0A;&#x0A;When this option is disabled the file is stored in ~/recordings/microphones. You can&#x0A;then get it on your computer using the menu Connection/File transfer.&#x0A;&#x0A;When this option is enabled the file is stored in the temporary folder of the behavior." id="7" /><Parameter name="Timeout (s)" inherits_from_parent="0" content_type="2" value="15" default_value="5" min="0.1" max="60" tooltip="Duration of the recording in seconds." id="8" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram><Box name="Rec. Sound File" id="4" localization="8" tooltip="Record a sound on the robot. You can choose to record only with one&#x0A;microphone (the front head microphone) in ogg format, or with four microphones&#x0A;(front, sides and rear head&#x0A;microphones) in wav format." x="562" y="100"><bitmap>media/images/box/interaction/rec_sound.png</bitmap><script language="4"><content><![CDATA[# -*- coding: utf-8 -*-
+from naoqi import ALProxy
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        try:
+            self.ad = ALProxy("ALAudioDevice")
+            self.logger.info("[RecordSound] got ALAudioDevice proxy")
+        except Exception as e:
+            self.ad = None
+            self.logger.error("[RecordSound] no ALAudioDevice: %s" % e)
+        self.filepath = ""
+
+    def onLoad(self):
+        self.bIsRecording = False
+        self.bIsRunning   = False
+        self.logger.info("[RecordSound] onLoad")
+
+    def onUnload(self):
+        self.logger.info("[RecordSound] onUnload")
+        self.bIsRunning = False
+        if self.bIsRecording:
+            self.logger.info("[RecordSound] stopping recording")
+            self.ad.stopMicrophonesRecording()
+            self.bIsRecording = False
+
+    def onInput_onStart(self, p):
+        self.logger.info("[RecordSound] onStart pathPrefix=%s" % p)
+        if self.bIsRunning:
+            self.logger.warning("[RecordSound] already running, ignoring")
+            return
+        self.bIsRunning = True
+        ext = self.toExtension(self.getParameter("Microphones used"))
+        self.filepath = p + ext
+        self.logger.info("[RecordSound] full filepath=%s" % self.filepath)
+        if self.ad:
+            self.ad.startMicrophonesRecording(self.filepath)
+            self.bIsRecording = True
+            self.logger.info("[RecordSound] recording started")
+        else:
+            self.logger.warning("[RecordSound] No sound recorded")
+
+    def onInput_onStop(self):
+        self.logger.info("[RecordSound] onStop")
+        if self.bIsRunning:
+            self.onUnload()
+            self.logger.info("[RecordSound] calling onStopped(%s)" % self.filepath)
+            self.onStopped(self.filepath)
+
+    def toExtension(self, s):
+        if "ogg" in s:
+            return ".ogg"
+        return ".wav"]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Launches the recording of the sound. The data received on this input must be the&#x0A;filename of the sound." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Stops the recording of the sound." id="3" /><Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Returns the absolute path of the output sound file at the end of the recording" id="4" /><Parameter name="Microphones used" inherits_from_parent="0" content_type="3" value="Front head microphone only (.ogg)" default_value="Front, sides and rear head microphones (.wav)" custom_choice="0" tooltip="Microphones used to record the sound.&#x0A;&#x0A;Note: If you use only the front head microphone the file will be saved in ogg format. If you use the&#x0A;front, sides and rear head microphones it will be saved in wav format." id="5"><Choice value="Front head microphone only (.ogg)" /><Choice value="Front, sides and rear head microphones (.wav)" /></Parameter></Box><Box name="Wait" id="13" localization="8" tooltip="Wait a moment before sending a bang on the output. The wait can be stopped any&#x0A;time. You may restart it any time, and it will start over." x="420" y="161"><bitmap>media/images/box/wait.png</bitmap><script language="4"><content><![CDATA[class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.waiting = None
+
+    def onUnload(self):
+        self.cancelWaiting()
+
+    def triggerOutput(self):
+        self.timerOutput()
+
+    def cancelWaiting(self):
+        if self.waiting:
+            self.waiting.cancel()
+        self.waiting = None
+
+    def onInput_onStart(self):
+        self.cancelWaiting()
+        import qi
+        self.waiting = qi.async(self.triggerOutput, delay=int(self.getParameter("Timeout (s)") * 1000 * 1000))
+
+    def onInput_onStop(self):
+        if self.getParameter("Trigger timerOutput if cancelled") and self.waiting and self.waiting.isRunning():
+            self.timerOutput()
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Start the Wait box with the configured timeout value." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Stop the wait and stimulate the output." id="3" /><Output name="timerOutput" type="1" type_size="1" nature="1" inner="0" tooltip="Send a bang once time set in parameters is ellapsed, or if the box is stopped." id="4" /><Parameter name="Timeout (s)" inherits_from_parent="1" content_type="2" value="5" default_value="1" min="0" max="5000" tooltip="Duration the box waits before stimulating the output." id="5" /></Box><Box name="Get File Name" id="10" localization="8" tooltip="Use this box to choose an attached file in its parameters. The filename will be sent on&#x0A;the output when the input is stimulated." x="234" y="95"><bitmap>media/images/box/folder.png</bitmap><script language="4"><content><![CDATA[import os
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.framemanager = ALProxy("ALFrameManager")
+
+    def onInput_onStart(self):
+        if( self.getParameter("Temporary storage") ):
+            import tempfile
+            path = tempfile.mkdtemp() + "/"
+        else:
+            path = os.path.expanduser('~') + "/recordings/microphones/"
+        self.onStopped( path + self.getParameter("File name") )]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="1" inner="0" tooltip="To send the filepath on the output." id="2" /><Output name="onStopped" type="3" type_size="1" nature="2" inner="0" tooltip="The filepath of the selected resource file." id="3" /><Parameter name="File name" inherits_from_parent="0" content_type="3" value="recording" default_value="" custom_choice="0" tooltip="Name of the file." id="4" /><Parameter name="Temporary storage" inherits_from_parent="0" content_type="0" value="0" default_value="0" tooltip="Choose if the file should be stored as a temporary file so it is removed as soon&#x0A;as the behavior is unloaded.&#x0A;&#x0A;When this option is enabled the file is stored in ~/.cache/currentChoregrapheBehavior&#x0A;or in ~/.cache/&lt;project_name&gt; when you play the behavior from the&#x0A;behavior manager.&#x0A;&#x0A;When it is disabled the file is stored in ~/recordedSounds. You can&#x0A;then get it on your computer using the menu Connection/File transfer." id="5" /></Box><Link inputowner="0" indexofinput="4" outputowner="4" indexofoutput="4" /><Link inputowner="4" indexofinput="3" outputowner="13" indexofoutput="4" /><Link inputowner="10" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="13" indexofinput="2" outputowner="10" indexofoutput="3" /><Link inputowner="4" indexofinput="2" outputowner="10" indexofoutput="3" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline><Resource name="Audio recorder" type="Lock" timeout="0" /></Box><Box name="SpeechRecognition" id="7" localization="8" tooltip="This box contains a basic python script and can be used to create any python script box you would like.&#x0A;&#x0A;To edit its script, double-click on it." x="532" y="350"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[# -*- coding: utf-8 -*-
+import urllib2
+import json
+import base64
+import wave
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self)
+        self.url = 'http://10.26.9.42:5001/google'
+        # log unicode encodé en utf-8
+        msg = u"SR URL = {}".format(self.url)
+        self.logger.info(msg.encode('utf-8'))
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def onInput_onStart(self, path):
+        # 1) début de la procédure
+        try:
+            msg = u"onStart déclenché, fichier = {}".format(path)
+            self.logger.info(msg.encode('utf-8'))
+        except Exception:
+            # fallback si même le log plante
+            self.logger.error("Erreur logging début onStart".encode('utf-8'))
+
+        try:
+            # 2) ouvrir le WAV
+            try:
+                wf = wave.open(path, 'rb')
+                params = str(wf.getparams())
+                frames = wf.readframes(wf.getnframes())
+                wf.close()
+                msg = u"WAV ouvert OK: params={}, frames={}".format(params, len(frames))
+                self.logger.info(msg.encode('utf-8'))
+            except Exception as e_wav:
+                err = u"Erreur ouverture WAV: {}".format(e_wav)
+                self.logger.error(err.encode('utf-8'))
+                raise
+
+            # 3) encodage base64
+            try:
+                data_b64   = base64.b64encode(frames)
+                params_b64 = base64.b64encode(params)
+                msg = u"Encodage base64 OK: data={} bytes, params={} bytes".format(
+                    len(data_b64), len(params_b64))
+                self.logger.info(msg.encode('utf-8'))
+            except Exception as e_enc:
+                err = u"Erreur encodage base64: {}".format(e_enc)
+                self.logger.error(err.encode('utf-8'))
+                raise
+
+            # 4) appel HTTP
+            response = self.pydial_call(self.url, data_b64, params_b64)
+
+            # 5) parsing JSON
+            try:
+                body = response.body
+                msg = u"Réponse brute = {}".format(body)
+                self.logger.info(msg.encode('utf-8'))
+
+                sentence = json.loads(body).get('sentence', '').strip()
+                msg = u"Sentence extraite = {}".format(sentence)
+                self.logger.info(msg.encode('utf-8'))
+            except Exception as e_json:
+                err = u"Erreur parsing JSON: {}".format(e_json)
+                self.logger.error(err.encode('utf-8'))
+                sentence = u""
+
+            if not sentence:
+                sentence = u"répète"
+
+        except Exception as e:
+            # 6) en cas d'erreur globale
+            err = u"Erreur SR onStart: {}".format(e)
+            self.logger.error(err.encode('utf-8'))
+            sentence = u"Erreur SR"
+
+        # 7) sortie
+        msg = u"onStopped avec '{}'".format(sentence)
+        self.logger.info(msg.encode('utf-8'))
+        self.onStopped(sentence.encode('utf-8'))
+
+    def onInput_onStop(self):
+        self.onUnload()
+
+    def pydial_call(self, url, speech_data, params):
+        try:
+            payload = json.dumps({'data': speech_data, 'params': params})
+            msg = u"Envoi payload début = {}".format(payload[:80])
+            self.logger.info(msg.encode('utf-8'))
+
+            req = urllib2.Request(
+                url,
+                data=payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            f = urllib2.urlopen(req, timeout=10)
+            code = f.getcode()
+            body = f.read()
+
+            msg = u"HTTP code = {}".format(code)
+            self.logger.info(msg.encode('utf-8'))
+
+            msg = u"HTTP body début = {}".format(body[:80])
+            self.logger.info(msg.encode('utf-8'))
+
+            class Response: pass
+            resp = Response()
+            resp.code = code
+            resp.body = body
+            return resp
+
+        except Exception as e_http:
+            err = u"Erreur pydial_call: {}".format(e_http)
+            self.logger.error(err.encode('utf-8'))
+            # fallback minimal
+            class Response: pass
+            resp = Response()
+            resp.code = 0
+            resp.body = ''
+            return resp]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="3" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /></Box><Box name="SayBye" id="2" localization="8" tooltip="Say the text received on its input." x="875" y="65"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALTextToSpeech')
+        self.ttsStop = ALProxy('ALTextToSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self, p):
+        self.bIsRunning = True
+        try:
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += str(p)
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence))
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip='Used to modify at runtime the voice feature (tone, speed). In a slighty&#x0A;different way than pitch and speed, it gives a kind of &quot;gender or age&#x0A;modification&quot; effect.&#x0A;&#x0A;For instance, a quite good male derivation of female voice can be&#x0A;obtained setting this parameter to 78%.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the&#x0A;speed parameter. For example, if you want to decrease by 20% the voice&#x0A;shaping, you will have to increase by 20% the speed to keep a constant&#x0A;average speed.' id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice.&#x0A;&#x0A;Note: For a better effect, you can compensate this parameter with the voice&#x0A;shaping parameter. For example, if you want to increase by 20% the speed, you&#x0A;will have to decrease by 20% the voice shaping to keep a constant average&#x0A;speed." id="6" /></Box><Link inputowner="6" indexofinput="2" outputowner="3" indexofoutput="6" /><Link inputowner="7" indexofinput="2" outputowner="8" indexofoutput="4" /><Link inputowner="3" indexofinput="4" outputowner="7" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" /><Link inputowner="8" indexofinput="2" outputowner="6" indexofoutput="4" /><Link inputowner="2" indexofinput="2" outputowner="3" indexofoutput="7" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
