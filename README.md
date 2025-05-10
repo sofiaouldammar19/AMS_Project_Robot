@@ -123,4 +123,3 @@ Ce projet est sous licence MIT. Vous êtes libre de le réutiliser, le modifier 
 
 Réalisé par
 Ould Ammar Sofia
-📧 <sofia.ould-ammar@alumni.univ-avignon.fr>
