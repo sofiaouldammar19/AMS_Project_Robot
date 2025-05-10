@@ -172,3 +172,12 @@ cython_debug/
 
 # API keys and other secrets
 .env
+
+# Ignore the following files for the web app chatbot
+# These files are not needed for the web app to run and can be ignored
+templates/
+appl.py
+
+# Compiled files
+*.pyc
+__pycache__/
