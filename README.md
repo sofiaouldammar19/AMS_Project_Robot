@@ -91,7 +91,7 @@ python -m spacy download fr_core_news_sm
 
 ### Emploi du temps
 
-**Utilisateur** : « Quel est le cours de M1 IA le 22 avril à 9h ? »
+**Utilisateur** : « Quel est le cours de M1 IA le 22 avril 2025 à 9h ? »
 **Pepper** : « C’est cours de Machine Learning en salle A201. »
 
 ### Quiz
